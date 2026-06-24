@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
+import LoadingSpinner from "@/app/_components/LoadingSpinner";
 
 interface Question {
   id: string;
@@ -74,6 +75,7 @@ export default function ExamClient({
   );
 
   const [submitting, setSubmitting] = useState(false);
+  const [saving, setSaving] = useState(false);
   const [showConfirmSubmit, setShowConfirmSubmit] = useState(false);
   const [sectionTransition, setSectionTransition] = useState(false);
   const autosaveRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -112,6 +114,7 @@ export default function ExamClient({
 
   async function autosaveAnswer(questionId: string, selectedOption: string | null) {
     if (autosaveRef.current) clearTimeout(autosaveRef.current);
+    setSaving(true);
     autosaveRef.current = setTimeout(async () => {
       try {
         await fetch(`/api/attempts/${attemptId}/answers`, {
@@ -123,6 +126,8 @@ export default function ExamClient({
           }),
         });
       } catch {
+      } finally {
+        setSaving(false);
       }
     }, 300);
   }
@@ -304,9 +309,15 @@ export default function ExamClient({
             <button
               onClick={() => setShowConfirmSubmit(true)}
               disabled={submitting}
-              className="bg-red-600 hover:bg-red-700 disabled:opacity-60 text-white text-sm font-semibold px-3 py-1.5 rounded-lg"
+              className="bg-red-600 hover:bg-red-700 disabled:opacity-60 text-white text-sm font-semibold px-3 py-1.5 rounded-lg flex items-center gap-1.5"
             >
-              End Test
+              {submitting ? (
+                <>
+                  <LoadingSpinner size="sm" /> Submitting
+                </>
+              ) : (
+                "End Test"
+              )}
             </button>
           </div>
         </div>
@@ -432,6 +443,11 @@ export default function ExamClient({
               <span className="text-xs text-gray-400">
                 {answeredCount}/{totalQ} answered
               </span>
+              {saving && (
+                <span className="text-xs text-blue-600 flex items-center gap-1">
+                  <LoadingSpinner size="sm" color="#2563eb" /> Saving…
+                </span>
+              )}
             </div>
             <button
               onClick={goToNext}
@@ -511,6 +527,16 @@ export default function ExamClient({
         </aside>
       </div>
 
+      {/* Submission overlay */}
+      {submitting && (
+        <div className="fixed inset-0 z-[60] bg-white/70 flex flex-col items-center justify-center">
+          <LoadingSpinner size="md" color="#2563eb" />
+          <p className="mt-3 text-sm font-medium text-gray-700">
+            Submitting your test…
+          </p>
+        </div>
+      )}
+
       {/* Submit confirmation modal */}
       {showConfirmSubmit && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
@@ -539,9 +565,15 @@ export default function ExamClient({
                   submitAttempt("submitted");
                 }}
                 disabled={submitting}
-                className="flex-1 bg-red-600 hover:bg-red-700 text-white rounded-xl py-2.5 text-sm font-semibold disabled:opacity-60"
+                className="flex-1 bg-red-600 hover:bg-red-700 text-white rounded-xl py-2.5 text-sm font-semibold disabled:opacity-60 flex items-center justify-center gap-2"
               >
-                {submitting ? "Submitting…" : "Submit"}
+                {submitting ? (
+                  <>
+                    <LoadingSpinner size="sm" /> Submitting…
+                  </>
+                ) : (
+                  "Submit"
+                )}
               </button>
             </div>
           </div>

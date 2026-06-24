@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import LoadingSpinner from "@/app/_components/LoadingSpinner";
 
 export default function AdminLoginPage() {
   const router = useRouter();
@@ -85,9 +86,15 @@ export default function AdminLoginPage() {
           <button
             type="submit"
             disabled={loading}
-            className="w-full bg-blue-600 hover:bg-blue-700 disabled:opacity-60 text-white font-semibold py-2 rounded-lg text-sm transition-colors"
+            className="w-full bg-blue-600 hover:bg-blue-700 disabled:opacity-60 text-white font-semibold py-2 rounded-lg text-sm transition-colors flex items-center justify-center gap-2"
           >
-            {loading ? "Signing in…" : "Sign In"}
+            {loading ? (
+              <>
+                <LoadingSpinner size="sm" /> Signing in…
+              </>
+            ) : (
+              "Sign In"
+            )}
           </button>
         </form>
       </div>

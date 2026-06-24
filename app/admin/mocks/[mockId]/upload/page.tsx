@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
+import LoadingSpinner from "@/app/_components/LoadingSpinner";
 
 interface PreviewQuestion {
   question_number: number;
@@ -31,6 +32,7 @@ export default function UploadQuestionsPage() {
   const [preview, setPreview] = useState<PreviewQuestion[] | null>(null);
   const [errors, setErrors] = useState<ParseError[]>([]);
   const [status, setStatus] = useState<"idle" | "parsing" | "confirming" | "done">("idle");
+  const [committing, setCommitting] = useState(false);
   const [submitError, setSubmitError] = useState("");
   const [insertedCount, setInsertedCount] = useState(0);
 
@@ -76,6 +78,7 @@ export default function UploadQuestionsPage() {
   async function handleCommit() {
     if (!file) return;
     setSubmitError("");
+    setCommitting(true);
     const fd = new FormData();
     fd.append("file", file);
     fd.append("action", "commit");
@@ -92,6 +95,7 @@ export default function UploadQuestionsPage() {
       setInsertedCount(data.inserted ?? 0);
       setStatus("done");
     }
+    setCommitting(false);
   }
 
   const templateType = mockInfo?.isBilingual ? "bilingual" : "ibps";
@@ -203,9 +207,16 @@ export default function UploadQuestionsPage() {
             </button>
             <button
               onClick={handleCommit}
-              className="px-6 py-2 bg-blue-600 text-white rounded-lg text-sm font-semibold hover:bg-blue-700"
+              disabled={committing}
+              className="px-6 py-2 bg-blue-600 text-white rounded-lg text-sm font-semibold hover:bg-blue-700 disabled:opacity-60 flex items-center gap-2"
             >
-              Confirm & Upload {preview.length} Questions
+              {committing ? (
+                <>
+                  <LoadingSpinner size="sm" /> Uploading…
+                </>
+              ) : (
+                <>Confirm & Upload {preview.length} Questions</>
+              )}
             </button>
           </div>
         </div>
@@ -262,9 +273,15 @@ export default function UploadQuestionsPage() {
             <button
               disabled={!file || status === "parsing"}
               onClick={handlePreview}
-              className="mt-4 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white font-semibold px-5 py-2 rounded-lg text-sm"
+              className="mt-4 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white font-semibold px-5 py-2 rounded-lg text-sm flex items-center gap-2"
             >
-              {status === "parsing" ? "Parsing…" : "Parse & Preview"}
+              {status === "parsing" ? (
+                <>
+                  <LoadingSpinner size="sm" /> Parsing…
+                </>
+              ) : (
+                "Parse & Preview"
+              )}
             </button>
           </div>
         </div>

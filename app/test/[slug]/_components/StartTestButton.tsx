@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import LoadingSpinner from "@/app/_components/LoadingSpinner";
 
 export default function StartTestButton({
   mockId,
@@ -46,9 +47,15 @@ export default function StartTestButton({
       <button
         onClick={handleStart}
         disabled={loading}
-        className="w-full bg-blue-600 hover:bg-blue-700 disabled:opacity-60 text-white font-bold py-3 rounded-xl text-base transition-colors"
+        className="w-full bg-blue-600 hover:bg-blue-700 disabled:opacity-60 text-white font-bold py-3 rounded-xl text-base transition-colors flex items-center justify-center gap-2"
       >
-        {loading ? "Starting…" : "Start Test"}
+        {loading ? (
+          <>
+            <LoadingSpinner size="sm" /> Starting…
+          </>
+        ) : (
+          "Start Test"
+        )}
       </button>
     </div>
   );

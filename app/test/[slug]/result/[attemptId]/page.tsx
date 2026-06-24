@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
+import ResultSummary from "./_components/ResultSummary";
 
 export const dynamic = "force-dynamic";
 
@@ -41,8 +42,9 @@ export default async function ResultPage({
 
   const { data: questions } = await supabase
     .from("questions")
-    .select("id, section_id")
-    .eq("mock_id", mock.id);
+    .select("id, section_id, question_number, question_text_en, question_text_hi, correct_option")
+    .eq("mock_id", mock.id)
+    .order("question_number");
 
   const { data: savedAnswers } = await supabase
     .from("attempt_answers")
@@ -228,19 +230,17 @@ export default async function ResultPage({
         )}
 
         {/* Actions */}
-        <div className="flex gap-3">
+        <div className="space-y-3">
           <Link
             href={`/test/${slug}`}
-            className="flex-1 text-center bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 rounded-xl text-sm"
+            className="block text-center bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 rounded-xl text-sm"
           >
             Try Again
           </Link>
-          <Link
-            href="/admin"
-            className="flex-1 text-center border border-gray-300 hover:bg-gray-50 text-gray-700 font-medium py-3 rounded-xl text-sm"
-          >
-            Admin Panel
-          </Link>
+          <ResultSummary
+            questions={questions ?? []}
+            answers={savedAnswers ?? []}
+          />
         </div>
       </div>
     </div>

@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import LoadingSpinner from "@/app/_components/LoadingSpinner";
 
 export default function DeleteQuestionButton({
   questionId,
@@ -28,7 +29,7 @@ export default function DeleteQuestionButton({
       className="text-xs text-red-500 hover:text-red-700 disabled:opacity-50"
       title="Delete question"
     >
-      {loading ? "…" : "✕"}
+      {loading ? <LoadingSpinner size="sm" color="#ef4444" /> : "✕"}
     </button>
   );
 }

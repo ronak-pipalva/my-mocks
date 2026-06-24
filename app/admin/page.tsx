@@ -1,5 +1,7 @@
 import Link from "next/link";
 import { createAdminClient } from "@/lib/supabase/server";
+import LoadingSpinner from "@/app/_components/LoadingSpinner";
+import DeleteMockButton from "./_components/DeleteMockButton";
 
 export const dynamic = "force-dynamic";
 
@@ -16,6 +18,15 @@ export default async function AdminDashboard() {
     `
     )
     .order("created_at", { ascending: false });
+
+  if (!mocks) {
+    return (
+      <div className="flex flex-col items-center justify-center py-20 text-gray-500">
+        <LoadingSpinner size="md" color="#6b7280" />
+        <p className="mt-3 text-sm">Loading mocks…</p>
+      </div>
+    );
+  }
 
   return (
     <div>
@@ -113,6 +124,7 @@ export default async function AdminDashboard() {
                   >
                     Upload Q
                   </Link>
+                  <DeleteMockButton mockId={mock.id} />
                 </div>
               </div>
             );

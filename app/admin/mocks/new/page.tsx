@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import LoadingSpinner from "@/app/_components/LoadingSpinner";
 
 interface Exam {
   id: string;
@@ -43,6 +44,7 @@ export default function NewMockPage() {
   const [sectionConfigs, setSectionConfigs] = useState<SectionConfig[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [examsLoading, setExamsLoading] = useState(true);
 
   useEffect(() => {
     fetch("/api/admin/exams")
@@ -50,7 +52,8 @@ export default function NewMockPage() {
       .then(({ exams, sections }) => {
         setExams(exams ?? []);
         setSections(sections ?? []);
-      });
+      })
+      .finally(() => setExamsLoading(false));
   }, []);
 
   useEffect(() => {
@@ -156,6 +159,12 @@ export default function NewMockPage() {
         {/* Exam selection */}
         <div className="bg-white border border-gray-200 rounded-xl p-5">
           <h2 className="font-semibold text-gray-800 mb-4">1. Select Exam</h2>
+          {examsLoading ? (
+            <div className="flex items-center gap-2 text-gray-500 py-4">
+              <LoadingSpinner size="sm" color="#6b7280" />
+              <span className="text-sm">Loading exams…</span>
+            </div>
+          ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             {exams.map((exam) => (
               <button
@@ -177,6 +186,7 @@ export default function NewMockPage() {
               </button>
             ))}
           </div>
+          )}
         </div>
 
         {selectedExamId && (
@@ -331,9 +341,15 @@ export default function NewMockPage() {
             <button
               type="submit"
               disabled={loading}
-              className="w-full bg-blue-600 hover:bg-blue-700 disabled:opacity-60 text-white font-semibold py-2.5 rounded-lg text-sm transition-colors"
+              className="w-full bg-blue-600 hover:bg-blue-700 disabled:opacity-60 text-white font-semibold py-2.5 rounded-lg text-sm transition-colors flex items-center justify-center gap-2"
             >
-              {loading ? "Creating…" : "Create Mock"}
+              {loading ? (
+                <>
+                  <LoadingSpinner size="sm" /> Creating…
+                </>
+              ) : (
+                "Create Mock"
+              )}
             </button>
           </>
         )}
