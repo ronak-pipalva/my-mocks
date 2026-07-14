@@ -3,6 +3,8 @@ import Link from "next/link";
 import { createAdminClient } from "@/lib/supabase/server";
 import DeleteQuestionButton from "./_components/DeleteQuestionButton";
 import CopyLinkButton from "./_components/CopyLinkButton";
+import DownloadPdfButton from "./_components/DownloadPdfButton";
+import EditQuestionButton from "./_components/EditQuestionButton";
 
 export const dynamic = "force-dynamic";
 
@@ -33,7 +35,7 @@ export default async function MockDetailPage({
 
   const { data: questions } = await supabase
     .from("questions")
-    .select("id, question_number, question_text_en, correct_option, section_id, sections(name)")
+    .select("id, question_number, question_text_en, question_text_hi, option_a_en, option_a_hi, option_b_en, option_b_hi, option_c_en, option_c_hi, option_d_en, option_d_hi, correct_option, section_id, sections(name)")
     .eq("mock_id", mockId)
     .order("question_number");
 
@@ -74,13 +76,14 @@ export default async function MockDetailPage({
             )}
           </p>
         </div>
-        <div className="flex gap-2 flex-shrink-0">
+        <div className="flex gap-2 flex-shrink-0 flex-wrap">
           <Link
             href={`/admin/mocks/${mockId}/upload`}
             className="text-sm px-3 py-1.5 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg font-medium"
           >
             Upload Questions
           </Link>
+          {exam?.is_bilingual && <DownloadPdfButton mockId={mockId} />}
           <Link
             href={`/test/${mock.slug}`}
             target="_blank"
@@ -204,7 +207,10 @@ export default async function MockDetailPage({
                       {q.correct_option}
                     </td>
                     <td className="px-4 py-2">
-                      <DeleteQuestionButton questionId={q.id} mockId={mockId} />
+                      <div className="flex items-center justify-end gap-3">
+                        <EditQuestionButton question={q} isBilingual={exam?.is_bilingual ?? false} />
+                        <DeleteQuestionButton questionId={q.id} mockId={mockId} />
+                      </div>
                     </td>
                   </tr>
                 );

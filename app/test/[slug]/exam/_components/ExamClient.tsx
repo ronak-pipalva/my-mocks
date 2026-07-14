@@ -65,7 +65,7 @@ export default function ExamClient({
   });
 
   const [answers, setAnswers] = useState<Record<string, string>>(initialAnswers);
-  const [language, setLanguage] = useState<"en" | "hi">("en");
+  const [language, setLanguage] = useState<"en" | "hi">(isBilingual ? "hi" : "en");
   const [lockedSections, setLockedSections] = useState<boolean[]>(
     sectionConfigs.map(() => false)
   );
@@ -79,6 +79,7 @@ export default function ExamClient({
   const [showConfirmSubmit, setShowConfirmSubmit] = useState(false);
   const [sectionTransition, setSectionTransition] = useState(false);
   const autosaveRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const questionPanelRef = useRef<HTMLDivElement>(null);
 
   const sectionQuestions = useCallback(
     (sectionId: string) =>
@@ -157,6 +158,10 @@ export default function ExamClient({
       return updated;
     });
     autosaveAnswer(qId, null);
+  }
+
+  function scrollToQuestion() {
+    questionPanelRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
   }
 
   function goToPrev() {
@@ -323,7 +328,7 @@ export default function ExamClient({
         </div>
       </header>
 
-      <div className="flex-1 flex max-w-screen-xl mx-auto w-full px-2 sm:px-4 py-4 gap-4">
+      <div className="flex max-w-screen-xl mx-auto w-full px-2 sm:px-4 py-4 gap-4">
         {/* Main question panel */}
         <main className="flex-1 min-w-0 flex flex-col">
           {/* Section tabs for IBPS */}
@@ -365,6 +370,7 @@ export default function ExamClient({
           {/* Question card */}
           {currentQuestion ? (
             <div
+              ref={questionPanelRef}
               className={`bg-white rounded-xl border border-gray-200 p-5 flex-1 transition-opacity ${
                 sectionTransition ? "opacity-0" : "opacity-100"
               }`}
@@ -374,7 +380,7 @@ export default function ExamClient({
                   {currentQuestion.question_number}
                 </span>
                 <p
-                  className={`text-gray-900 leading-relaxed ${
+                  className={`text-gray-900 leading-relaxed whitespace-pre-wrap ${
                     language === "hi" ? "text-lg" : "text-base"
                   }`}
                 >
@@ -407,13 +413,57 @@ export default function ExamClient({
                       <span
                         className={`${
                           language === "hi" ? "text-base" : "text-sm"
-                        } text-gray-800`}
+                        } text-gray-800 whitespace-pre-wrap`}
                       >
                         {optText(currentQuestion, opt)}
                       </span>
                     </button>
                   );
                 })}
+              </div>
+
+              {/* Navigation buttons — inside card so always visible */}
+              <div className="flex items-center justify-between mt-6 pt-4 border-t border-gray-100">
+                <button
+                  onClick={goToPrev}
+                  disabled={currentQIdx === 0}
+                  className="px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed"
+                >
+                  ← Previous
+                </button>
+                <div className="flex items-center gap-2">
+                  {answers[currentQuestionId] && (
+                    <button
+                      onClick={clearResponse}
+                      className="px-3 py-2 border border-red-200 text-red-600 hover:bg-red-50 rounded-lg text-xs font-medium"
+                    >
+                      Clear
+                    </button>
+                  )}
+                  <span className="text-xs text-gray-400">
+                    {answeredCount}/{totalQ} answered
+                  </span>
+                  {saving && (
+                    <span className="text-xs text-blue-600 flex items-center gap-1">
+                      <LoadingSpinner size="sm" color="#2563eb" /> Saving…
+                    </span>
+                  )}
+                </div>
+                <button
+                  onClick={goToNext}
+                  disabled={
+                    currentQIdx === currentSectionQs.length - 1 &&
+                    (!isSectionWise ||
+                      currentSectionIdx === sectionConfigs.length - 1)
+                  }
+                  className="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 disabled:opacity-40 disabled:cursor-not-allowed"
+                >
+                  {currentQIdx === currentSectionQs.length - 1 &&
+                  isSectionWise &&
+                  currentSectionIdx < sectionConfigs.length - 1
+                    ? "Next Section →"
+                    : "Next →"}
+                </button>
               </div>
             </div>
           ) : (
@@ -422,49 +472,6 @@ export default function ExamClient({
             </div>
           )}
 
-          {/* Navigation buttons */}
-          <div className="flex items-center justify-between mt-4">
-            <button
-              onClick={goToPrev}
-              disabled={currentQIdx === 0}
-              className="px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed"
-            >
-              ← Previous
-            </button>
-            <div className="flex items-center gap-2">
-              {answers[currentQuestionId] && (
-                <button
-                  onClick={clearResponse}
-                  className="px-3 py-2 border border-red-200 text-red-600 hover:bg-red-50 rounded-lg text-xs font-medium"
-                >
-                  Clear
-                </button>
-              )}
-              <span className="text-xs text-gray-400">
-                {answeredCount}/{totalQ} answered
-              </span>
-              {saving && (
-                <span className="text-xs text-blue-600 flex items-center gap-1">
-                  <LoadingSpinner size="sm" color="#2563eb" /> Saving…
-                </span>
-              )}
-            </div>
-            <button
-              onClick={goToNext}
-              disabled={
-                currentQIdx === currentSectionQs.length - 1 &&
-                (!isSectionWise ||
-                  currentSectionIdx === sectionConfigs.length - 1)
-              }
-              className="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 disabled:opacity-40 disabled:cursor-not-allowed"
-            >
-              {currentQIdx === currentSectionQs.length - 1 &&
-              isSectionWise &&
-              currentSectionIdx < sectionConfigs.length - 1
-                ? "Next Section →"
-                : "Next →"}
-            </button>
-          </div>
         </main>
 
         {/* Question palette sidebar */}
