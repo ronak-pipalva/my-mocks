@@ -42,7 +42,7 @@ export default async function ResultPage({
 
   const { data: questions } = await supabase
     .from("questions")
-    .select("id, section_id, question_number, question_text_en, question_text_hi, correct_option")
+    .select("id, section_id, question_number, question_text_en, question_text_hi, option_a_hi, option_b_hi, option_c_hi, option_d_hi, correct_option")
     .eq("mock_id", mock.id)
     .order("question_number");
 
@@ -237,10 +237,12 @@ export default async function ResultPage({
           >
             Try Again
           </Link>
-          <ResultSummary
-            questions={questions ?? []}
-            answers={savedAnswers ?? []}
-          />
+          {exam?.name.trim().toUpperCase() === "AIAPGET" && (
+            <ResultSummary
+              questions={questions ?? []}
+              answers={savedAnswers ?? []}
+            />
+          )}
         </div>
       </div>
     </div>

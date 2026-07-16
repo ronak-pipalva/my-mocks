@@ -1,13 +1,16 @@
 "use client";
 
 import { useState } from "react";
-import LoadingSpinner from "@/app/_components/LoadingSpinner";
 
 interface Question {
   id: string;
   question_number: number;
   question_text_en: string;
   question_text_hi: string | null;
+  option_a_hi: string | null;
+  option_b_hi: string | null;
+  option_c_hi: string | null;
+  option_d_hi: string | null;
   correct_option: string;
 }
 
@@ -15,6 +18,18 @@ interface Answer {
   question_id: string;
   selected_option: string | null;
   is_correct: boolean | null;
+}
+
+const OPTIONS = ["A", "B", "C", "D"] as const;
+
+function optionText(question: Question, option: (typeof OPTIONS)[number]) {
+  const fields = {
+    A: question.option_a_hi,
+    B: question.option_b_hi,
+    C: question.option_c_hi,
+    D: question.option_d_hi,
+  };
+  return fields[option] ?? "हिंदी विकल्प उपलब्ध नहीं है";
 }
 
 export default function ResultSummary({
@@ -39,14 +54,14 @@ export default function ResultSummary({
         onClick={() => setOpen(true)}
         className="w-full bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 font-semibold py-3 rounded-xl text-sm transition-colors"
       >
-        View Answer Summary
+        उत्तरों की समीक्षा देखें
       </button>
 
       {open && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
           <div className="bg-white rounded-2xl shadow-2xl w-full max-w-3xl max-h-[80vh] flex flex-col">
             <div className="px-5 py-4 border-b border-gray-200 flex items-center justify-between">
-              <h2 className="text-lg font-bold text-gray-900">Answer Summary</h2>
+              <h2 className="text-lg font-bold text-gray-900">उत्तर समीक्षा</h2>
               <button
                 onClick={() => setOpen(false)}
                 className="text-gray-400 hover:text-gray-600 text-xl leading-none"
@@ -55,81 +70,86 @@ export default function ResultSummary({
               </button>
             </div>
 
-            <div className="overflow-auto p-5">
-              <table className="w-full text-sm">
-                <thead className="bg-gray-50 sticky top-0">
-                  <tr>
-                    <th className="text-left px-3 py-2 font-medium text-gray-600">#</th>
-                    <th className="text-left px-3 py-2 font-medium text-gray-600">Question</th>
-                    <th className="text-center px-3 py-2 font-medium text-gray-600">Your</th>
-                    <th className="text-center px-3 py-2 font-medium text-gray-600">Correct</th>
-                    <th className="text-left px-3 py-2 font-medium text-gray-600">Status</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {sorted.map((q) => {
-                    const a = answerMap.get(q.id);
-                    const selected = a?.selected_option ?? null;
-                    const correct = q.correct_option;
-                    const status = selected
-                      ? a?.is_correct === true
-                        ? "correct"
-                        : "wrong"
-                      : "skipped";
+            <div className="overflow-auto p-5 space-y-5">
+              {sorted.map((question) => {
+                const answer = answerMap.get(question.id);
+                const selected = answer?.selected_option ?? null;
+                const correct = question.correct_option;
 
-                    return (
-                      <tr
-                        key={q.id}
-                        className="border-t border-gray-100 hover:bg-gray-50"
-                      >
-                        <td className="px-3 py-2.5 text-gray-500">
-                          {q.question_number}
-                        </td>
-                        <td className="px-3 py-2.5 text-gray-800 max-w-xs">
-                          <p className="line-clamp-2">{q.question_text_en}</p>
-                        </td>
-                        <td className="px-3 py-2.5 text-center font-mono font-semibold">
-                          {selected ? (
+                return (
+                  <section
+                    key={question.id}
+                    className="rounded-xl border border-gray-200 p-4"
+                  >
+                    <div className="flex items-start gap-3 mb-4">
+                      <span className="flex-shrink-0 w-7 h-7 rounded-full bg-blue-600 text-white text-xs font-bold flex items-center justify-center">
+                        {question.question_number}
+                      </span>
+                      <p className="text-base text-gray-900 leading-relaxed whitespace-pre-wrap">
+                        {question.question_text_hi ?? "हिंदी प्रश्न उपलब्ध नहीं है"}
+                      </p>
+                    </div>
+
+                    <div className="space-y-2">
+                      {OPTIONS.map((option) => {
+                        const isCorrect = option === correct;
+                        const isSelected = option === selected;
+                        const isSelectedWrong = isSelected && !isCorrect;
+
+                        return (
+                          <div
+                            key={option}
+                            className={`flex items-start gap-3 rounded-lg border-2 p-3 ${
+                              isCorrect
+                                ? "border-green-500 bg-green-50"
+                                : isSelectedWrong
+                                ? "border-red-500 bg-red-50"
+                                : "border-gray-200 bg-white"
+                            }`}
+                          >
                             <span
-                              className={
-                                status === "correct"
-                                  ? "text-green-600"
-                                  : status === "wrong"
-                                  ? "text-red-600"
-                                  : "text-gray-600"
-                              }
+                              className={`flex-shrink-0 w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold ${
+                                isCorrect
+                                  ? "bg-green-600 text-white"
+                                  : isSelectedWrong
+                                  ? "bg-red-600 text-white"
+                                  : "border border-gray-300 text-gray-600"
+                              }`}
                             >
-                              {selected}
+                              {option}
                             </span>
-                          ) : (
-                            <span className="text-gray-400">—</span>
-                          )}
-                        </td>
-                        <td className="px-3 py-2.5 text-center font-mono font-semibold text-green-600">
-                          {correct}
-                        </td>
-                        <td className="px-3 py-2.5">
-                          {status === "correct" && (
-                            <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-green-100 text-green-700">
-                              Correct
-                            </span>
-                          )}
-                          {status === "wrong" && (
-                            <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-red-100 text-red-700">
-                              Wrong
-                            </span>
-                          )}
-                          {status === "skipped" && (
-                            <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-600">
-                              Skipped
-                            </span>
-                          )}
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
+                            <p className="flex-1 text-sm text-gray-800 leading-relaxed whitespace-pre-wrap">
+                              {optionText(question, option)}
+                            </p>
+                            <div className="flex flex-col items-end gap-1">
+                              {isCorrect && (
+                                <span className="text-xs font-semibold text-green-700">
+                                  सही उत्तर
+                                </span>
+                              )}
+                              {isSelected && (
+                                <span
+                                  className={`text-xs font-semibold ${
+                                    isCorrect ? "text-green-700" : "text-red-700"
+                                  }`}
+                                >
+                                  आपका उत्तर
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+
+                    {!selected && (
+                      <p className="mt-3 text-xs font-medium text-gray-500">
+                        उत्तर नहीं दिया गया
+                      </p>
+                    )}
+                  </section>
+                );
+              })}
             </div>
 
             <div className="px-5 py-4 border-t border-gray-200 bg-gray-50 flex justify-end">
@@ -137,7 +157,7 @@ export default function ResultSummary({
                 onClick={() => setOpen(false)}
                 className="px-5 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-semibold"
               >
-                Close
+                बंद करें
               </button>
             </div>
           </div>
