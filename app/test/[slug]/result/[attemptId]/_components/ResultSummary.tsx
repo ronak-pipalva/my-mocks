@@ -5,7 +5,7 @@ import { useState } from "react";
 interface Question {
   id: string;
   question_number: number;
-  question_text_en: string;
+  question_text_en: string | null;
   question_text_hi: string | null;
   option_a_hi: string | null;
   option_b_hi: string | null;

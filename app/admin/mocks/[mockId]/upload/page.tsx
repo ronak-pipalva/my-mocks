@@ -7,7 +7,8 @@ import LoadingSpinner from "@/app/_components/LoadingSpinner";
 
 interface PreviewQuestion {
   question_number: number;
-  question_text_en: string;
+  question_text_en: string | null;
+  question_text_hi: string | null;
   section_id: string;
   correct_option: string;
 }
@@ -173,7 +174,7 @@ export default function UploadQuestionsPage() {
                       {q.question_number}
                     </td>
                     <td className="px-4 py-2 text-gray-800 max-w-xs truncate">
-                      {q.question_text_en}
+                      {q.question_text_en ?? q.question_text_hi}
                     </td>
                     <td className="px-4 py-2 font-mono font-bold text-blue-700">
                       {q.correct_option}
@@ -231,7 +232,7 @@ export default function UploadQuestionsPage() {
             <p className="text-sm text-gray-600 mb-3">
               Use this Excel template to format your questions correctly.
               {mockInfo?.isBilingual
-                ? " AIAPGET format includes English + Hindi columns."
+                ? " AIAPGET rows may be English-only, Hindi-only, or bilingual; complete each language you include."
                 : " IBPS format includes section_name column."}
             </p>
             <a

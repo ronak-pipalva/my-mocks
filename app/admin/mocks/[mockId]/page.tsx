@@ -198,7 +198,7 @@ export default async function MockDetailPage({
                   <tr key={q.id} className="border-t border-gray-100 hover:bg-gray-50">
                     <td className="px-4 py-2 text-gray-500">{q.question_number}</td>
                     <td className="px-4 py-2 text-gray-800 max-w-xs">
-                      <p className="line-clamp-2">{q.question_text_en}</p>
+                      <p className="line-clamp-2">{q.question_text_en ?? q.question_text_hi}</p>
                     </td>
                     <td className="px-4 py-2 text-gray-500 text-xs">
                       {sec?.name ?? "—"}

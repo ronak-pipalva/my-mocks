@@ -3,15 +3,15 @@ import * as XLSX from "xlsx";
 export interface ParsedQuestion {
   section_name?: string;
   question_number: number;
-  question_text_en: string;
+  question_text_en?: string;
   question_text_hi?: string;
-  option_a_en: string;
+  option_a_en?: string;
   option_a_hi?: string;
-  option_b_en: string;
+  option_b_en?: string;
   option_b_hi?: string;
-  option_c_en: string;
+  option_c_en?: string;
   option_c_hi?: string;
-  option_d_en: string;
+  option_d_en?: string;
   option_d_hi?: string;
   correct_option: string;
 }
@@ -128,27 +128,52 @@ export function parseQuestionFile(
     }
 
     if (isBilingual) {
-      const qTextEn = col(row, "question_text_en");
-      const optAEn = col(row, "option_a_en");
-      const optBEn = col(row, "option_b_en");
-      const optCEn = col(row, "option_c_en");
-      const optDEn = col(row, "option_d_en");
-      if (!qTextEn || !optAEn || !optBEn || !optCEn || !optDEn) {
-        errors.push({ row: rowNum, message: "Missing required English text fields" });
+      const english = {
+        question_text: col(row, "question_text_en"),
+        option_a: col(row, "option_a_en"),
+        option_b: col(row, "option_b_en"),
+        option_c: col(row, "option_c_en"),
+        option_d: col(row, "option_d_en"),
+      };
+      const hindi = {
+        question_text: col(row, "question_text_hi"),
+        option_a: col(row, "option_a_hi"),
+        option_b: col(row, "option_b_hi"),
+        option_c: col(row, "option_c_hi"),
+        option_d: col(row, "option_d_hi"),
+      };
+      const englishValues = Object.values(english);
+      const hindiValues = Object.values(hindi);
+      const hasEnglish = englishValues.some(Boolean);
+      const hasHindi = hindiValues.some(Boolean);
+      const hasCompleteEnglish = englishValues.every(Boolean);
+      const hasCompleteHindi = hindiValues.every(Boolean);
+
+      if (!hasCompleteEnglish && hasEnglish) {
+        errors.push({ row: rowNum, message: "English question text and all four English options are required when English is provided" });
         continue;
       }
+      if (!hasCompleteHindi && hasHindi) {
+        errors.push({ row: rowNum, message: "Hindi question text and all four Hindi options are required when Hindi is provided" });
+        continue;
+      }
+      if (!hasCompleteEnglish && !hasCompleteHindi) {
+        errors.push({ row: rowNum, message: "Provide a complete question and all four options in English or Hindi" });
+        continue;
+      }
+
       questions.push({
         question_number: qNum,
-        question_text_en: qTextEn,
-        question_text_hi: col(row, "question_text_hi") || undefined,
-        option_a_en: optAEn,
-        option_a_hi: col(row, "option_a_hi") || undefined,
-        option_b_en: optBEn,
-        option_b_hi: col(row, "option_b_hi") || undefined,
-        option_c_en: optCEn,
-        option_c_hi: col(row, "option_c_hi") || undefined,
-        option_d_en: optDEn,
-        option_d_hi: col(row, "option_d_hi") || undefined,
+        question_text_en: hasCompleteEnglish ? english.question_text : undefined,
+        question_text_hi: hasCompleteHindi ? hindi.question_text : undefined,
+        option_a_en: hasCompleteEnglish ? english.option_a : undefined,
+        option_a_hi: hasCompleteHindi ? hindi.option_a : undefined,
+        option_b_en: hasCompleteEnglish ? english.option_b : undefined,
+        option_b_hi: hasCompleteHindi ? hindi.option_b : undefined,
+        option_c_en: hasCompleteEnglish ? english.option_c : undefined,
+        option_c_hi: hasCompleteHindi ? hindi.option_c : undefined,
+        option_d_en: hasCompleteEnglish ? english.option_d : undefined,
+        option_d_hi: hasCompleteHindi ? hindi.option_d : undefined,
         correct_option: correctOption,
       });
     } else {

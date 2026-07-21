@@ -8,15 +8,15 @@ interface Question {
   id: string;
   section_id: string;
   question_number: number;
-  question_text_en: string;
+  question_text_en: string | null;
   question_text_hi: string | null;
-  option_a_en: string;
+  option_a_en: string | null;
   option_a_hi: string | null;
-  option_b_en: string;
+  option_b_en: string | null;
   option_b_hi: string | null;
-  option_c_en: string;
+  option_c_en: string | null;
   option_c_hi: string | null;
-  option_d_en: string;
+  option_d_en: string | null;
   option_d_hi: string | null;
   correct_option: string;
 }
@@ -65,7 +65,10 @@ export default function ExamClient({
   });
 
   const [answers, setAnswers] = useState<Record<string, string>>(initialAnswers);
-  const [language, setLanguage] = useState<"en" | "hi">(isBilingual ? "hi" : "en");
+  const [language, setLanguage] = useState<"en" | "hi">(() => {
+    if (!isBilingual) return "en";
+    return questions[0]?.question_text_en ? "en" : "hi";
+  });
   const [lockedSections, setLockedSections] = useState<boolean[]>(
     sectionConfigs.map(() => false)
   );
@@ -95,9 +98,9 @@ export default function ExamClient({
   const currentQIdx = currentSectionQs.findIndex((q) => q.id === currentQuestionId);
 
   function qText(q: Question) {
-    return language === "hi" && q.question_text_hi
-      ? q.question_text_hi
-      : q.question_text_en;
+    return language === "hi"
+      ? q.question_text_hi ?? q.question_text_en ?? ""
+      : q.question_text_en ?? q.question_text_hi ?? "";
   }
 
   function optText(q: Question, opt: "A" | "B" | "C" | "D") {
@@ -106,11 +109,11 @@ export default function ExamClient({
       | "option_b_"
       | "option_c_"
       | "option_d_";
-    if (language === "hi") {
-      const hi = q[`${key}hi` as keyof Question] as string | null;
-      if (hi) return hi;
-    }
-    return q[`${key}en` as keyof Question] as string;
+    const english = q[`${key}en` as keyof Question] as string | null;
+    const hindi = q[`${key}hi` as keyof Question] as string | null;
+    return language === "hi"
+      ? hindi ?? english ?? ""
+      : english ?? hindi ?? "";
   }
 
   async function autosaveAnswer(questionId: string, selectedOption: string | null) {
