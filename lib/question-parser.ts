@@ -37,6 +37,24 @@ const IBPS_HEADERS = [
   "correct_option",
 ];
 
+const AIAPGET_BASE_HEADERS = ["question_number", "correct_option"];
+
+const AIAPGET_ENGLISH_HEADERS = [
+  "question_text_en",
+  "option_a_en",
+  "option_b_en",
+  "option_c_en",
+  "option_d_en",
+];
+
+const AIAPGET_HINDI_HEADERS = [
+  "question_text_hi",
+  "option_a_hi",
+  "option_b_hi",
+  "option_c_hi",
+  "option_d_hi",
+];
+
 const AIAPGET_HEADERS = [
   "question_number",
   "question_text_en",
@@ -78,19 +96,40 @@ export function parseQuestionFile(
   }
 
   const headerRow = (rows[0] as unknown[]).map(normalizeHeader);
-  const expectedHeaders = isBilingual ? AIAPGET_HEADERS : IBPS_HEADERS;
-
-  const missingHeaders = expectedHeaders.filter((h) => !headerRow.includes(h));
+  const requiredHeaders = isBilingual ? AIAPGET_BASE_HEADERS : IBPS_HEADERS;
+  const missingHeaders = requiredHeaders.filter((h) => !headerRow.includes(h));
   if (missingHeaders.length > 0) {
     return {
       questions: [],
       errors: [
         {
           row: 1,
-          message: `Missing columns: ${missingHeaders.join(", ")}. Expected: ${expectedHeaders.join(", ")}`,
+          message: `Missing columns: ${missingHeaders.join(", ")}.`,
         },
       ],
     };
+  }
+
+  if (isBilingual) {
+    const missingEnglishHeaders = AIAPGET_ENGLISH_HEADERS.filter(
+      (header) => !headerRow.includes(header)
+    );
+    const missingHindiHeaders = AIAPGET_HINDI_HEADERS.filter(
+      (header) => !headerRow.includes(header)
+    );
+    const hasEnglishHeaders = missingEnglishHeaders.length === 0;
+    const hasHindiHeaders = missingHindiHeaders.length === 0;
+    if (!hasEnglishHeaders && !hasHindiHeaders) {
+      return {
+        questions: [],
+        errors: [
+          {
+            row: 1,
+            message: "Include all English columns or all Hindi columns for each AIAPGET question.",
+          },
+        ],
+      };
+    }
   }
 
   const col = (row: unknown[], name: string): string =>
@@ -144,19 +183,9 @@ export function parseQuestionFile(
       };
       const englishValues = Object.values(english);
       const hindiValues = Object.values(hindi);
-      const hasEnglish = englishValues.some(Boolean);
-      const hasHindi = hindiValues.some(Boolean);
       const hasCompleteEnglish = englishValues.every(Boolean);
       const hasCompleteHindi = hindiValues.every(Boolean);
 
-      if (!hasCompleteEnglish && hasEnglish) {
-        errors.push({ row: rowNum, message: "English question text and all four English options are required when English is provided" });
-        continue;
-      }
-      if (!hasCompleteHindi && hasHindi) {
-        errors.push({ row: rowNum, message: "Hindi question text and all four Hindi options are required when Hindi is provided" });
-        continue;
-      }
       if (!hasCompleteEnglish && !hasCompleteHindi) {
         errors.push({ row: rowNum, message: "Provide a complete question and all four options in English or Hindi" });
         continue;
